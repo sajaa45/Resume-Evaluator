@@ -1,10 +1,10 @@
-# Resume Analyzer — Backend (Go)
+# Candidate Screener — Backend (Go)
 
-A Go backend that parses a resume PDF and evaluates it against a job description using Amazon Bedrock.
+Go HTTP server that accepts a candidate's resume PDF and a job description, runs them through an LLM on Amazon Bedrock, and returns a structured screening result for recruiters.
 
 ## Stack
 
-- **Go** — HTTP server
+- **Go** — HTTP server (`net/http`)
 - **Amazon Bedrock** — LLM inference (`openai.gpt-oss-20b-1:0`)
 - **MuPDF / go-fitz** — PDF text extraction
 
@@ -12,17 +12,17 @@ A Go backend that parses a resume PDF and evaluates it against a job description
 
 ```
 backend-go/
-├── main.go                 # Server setup and routes
-├── .env                    # Environment variables
-├── go.mod
+├── main.go                 # Server setup, routes, CORS middleware
+├── .env                    # Environment variables (not committed)
+├── go.mod / go.sum
 ├── handlers/
-│   └── application.go      # HTTP endpoints
+│   └── application.go      # HTTP endpoints and response parsing
 ├── services/
-│   ├── llm.go              # Bedrock LLM client
+│   ├── llm.go              # Amazon Bedrock client
 │   └── pdf.go              # PDF text extractor
 ├── models/
 │   └── models.go           # Request/response structs
-└── uploads/                # Uploaded files and saved analysis
+└── uploads/                # Uploaded PDFs and saved analysis JSON
 ```
 
 ## Setup
@@ -30,11 +30,11 @@ backend-go/
 ### 1. Prerequisites
 
 - Go 1.22+
-- MuPDF installed via Homebrew:
+- MuPDF installed:
   ```bash
   brew install mupdf
   ```
-- An AWS account with Bedrock access and the model enabled
+- AWS account with Bedrock access and the model enabled
 
 ### 2. Environment Variables
 
@@ -55,53 +55,61 @@ CGO_LDFLAGS="-L/opt/homebrew/opt/mupdf/lib -lmupdf -lmupdf-third" \
 go run main.go
 ```
 
-## API Endpoints
+Server starts at `http://localhost:8080`.
+
+## API
 
 ### `GET /health`
 Returns server status.
 
 ```bash
 curl http://localhost:8080/health
+# {"status":"ok"}
 ```
 
 ---
 
 ### `POST /analyze`
-Upload a resume PDF and a job description. Returns a structured analysis.
+Upload a candidate's resume PDF and your job description. Returns a structured screening result.
 
 **Form fields:**
+
 | Field | Type | Description |
 |-------|------|-------------|
-| `resume` | file | Resume in PDF format |
+| `resume` | file | Candidate resume in PDF format |
 | `job` | text | Job description as plain text |
 
 ```bash
 curl -X POST http://localhost:8080/analyze \
-  -F "resume=@uploads/resume.pdf" \
-  -F "job=We are looking for an AI Engineer with Python and LangChain experience..."
+  -F "resume=@uploads/candidate.pdf" \
+  -F "job=We are looking for a Senior Go engineer with Kubernetes experience..."
 ```
 
 **Response:**
 ```json
 {
   "strong_points": [
-    "Proficient in Python and LangChain",
-    "Experience with RAG pipelines"
+    "5 years of Go experience",
+    "Kubernetes and Docker proficiency"
   ],
   "weak_points": [
-    "No experience with Google ADK",
-    "Limited MLOps exposure"
+    "No mention of CI/CD pipelines",
+    "Limited cloud infrastructure exposure"
   ],
-  "conclusion": "Maybe",
-  "match_percentage": "65%"
+  "conclusion": "Yes",
+  "match_percentage": "78%"
 }
 ```
 
 ---
 
 ### `GET /analysis`
-Returns the last saved analysis result.
+Returns the most recently saved screening result.
 
 ```bash
 curl http://localhost:8080/analysis
 ```
+
+## CORS
+
+The server allows all origins (`*`) in development. Restrict `Access-Control-Allow-Origin` to your frontend domain before deploying to production.

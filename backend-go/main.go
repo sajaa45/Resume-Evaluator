@@ -12,6 +12,23 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// corsMiddleware allows requests from any localhost origin (dev-friendly).
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		// Handle preflight
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	godotenv.Load()
 
@@ -37,5 +54,5 @@ func main() {
 	mux.HandleFunc("GET /analysis", handlers.GetAnalysis) // get last saved analysis
 
 	fmt.Printf("Server running on http://localhost:%s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, mux))
+	log.Fatal(http.ListenAndServe(":"+port, corsMiddleware(mux)))
 }
