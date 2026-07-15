@@ -144,7 +144,8 @@ func parseAnalysis(raw string) models.AnalysisResponse {
 		case strings.HasSuffix(line, "%") && result.MatchPercentage == "":
 			result.MatchPercentage = line
 		case current != nil && (strings.HasPrefix(line, "-") || strings.HasPrefix(line, "•")):
-			*current = append(*current, strings.TrimSpace(line[1:]))
+			point := strings.TrimPrefix(strings.TrimPrefix(line, "-"), "•")
+			*current = append(*current, strings.TrimSpace(point))
 		}
 	}
 
