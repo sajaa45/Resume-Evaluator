@@ -57,6 +57,36 @@ go run main.go
 
 Server starts at `http://localhost:8080`.
 
+## Docker
+
+### Build
+
+```bash
+docker build -t backend-go ./backend-go
+```
+
+Rebuild with the same `-t backend-go` tag whenever you change source or the Dockerfile — Docker doesn't watch files for you. Old images from previous builds become "dangling" once the tag moves; clean them up with:
+
+```bash
+docker image prune -f
+```
+
+### Run
+
+```bash
+docker run --rm -p 8080:8080 --env-file backend-go/.env backend-go
+```
+
+`--rm` removes the container automatically when it stops, which is convenient during dev. To run it detached with a fixed name so you can stop/replace it explicitly:
+
+```bash
+docker run -d --name backend-go -p 8080:8080 --env-file backend-go/.env backend-go
+
+# to replace after a rebuild
+docker stop backend-go && docker rm backend-go
+docker run -d --name backend-go -p 8080:8080 --env-file backend-go/.env backend-go
+```
+
 ## API
 
 ### `GET /health`
