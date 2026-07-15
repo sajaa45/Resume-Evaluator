@@ -1,0 +1,40 @@
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - "backend-go/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend-go/**"
+
+jobs:
+  build-and-test:
+    name: Test & Build (Go)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend-go
+    env:
+      CGO_ENABLED: "1"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend-go/go.mod
+          cache-dependency-path: backend-go/go.sum
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Build
+        run: go build -o /dev/null ./...
+
+      - name: Build Docker image
+        run: docker build -t backend-go .
