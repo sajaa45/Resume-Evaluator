@@ -26,5 +26,5 @@ COPY --from=builder /out/server ./server
 RUN mkdir -p uploads
 
 EXPOSE 8080
-
+ 
 ENTRYPOINT ["./server"]
